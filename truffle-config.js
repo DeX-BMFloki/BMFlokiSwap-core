@@ -1,5 +1,5 @@
 const HDWalletProvider = require('truffle-hdwallet-provider');
-const { mnemonic, BSCSCANAPIKEY} = require('./secrets.json');
+const { mnemonic, BSCSCANAPIKEY, infuraKey} = require('./secrets.json');
 
 
 module.exports = {
@@ -32,6 +32,14 @@ module.exports = {
       confirmations: 10,
       timeoutBlocks: 200,
       skipDryRun: true
+    },
+    rinkeby: {
+      provider: () => new HDWalletProvider(mnemonic, `https://rinkeby.infura.io/v3/${infuraKey}`),
+      network_id: 4,       
+      gas: 5500000,        
+      confirmations: 2,    
+      timeoutBlocks: 200,  
+      skipDryRun: true     
     },
   },
    compilers: {

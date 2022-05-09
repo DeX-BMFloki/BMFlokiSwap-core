@@ -8,6 +8,7 @@ import { pairFixture } from './shared/fixtures'
 import { AddressZero } from 'ethers/constants'
 
 const MINIMUM_LIQUIDITY = bigNumberify(10).pow(3)
+const FEE_DENOMINATOR = bigNumberify(10).pow(4)
 
 chai.use(solidity)
 
@@ -26,6 +27,7 @@ describe('BMFlokiPair', () => {
   let token0: Contract
   let token1: Contract
   let pair: Contract
+
   beforeEach(async () => {
     const fixture = await loadFixture(pairFixture)
     factory = fixture.factory
@@ -63,36 +65,44 @@ describe('BMFlokiPair', () => {
   async function addLiquidity(token0Amount: BigNumber, token1Amount: BigNumber) {
     await token0.transfer(pair.address, token0Amount)
     await token1.transfer(pair.address, token1Amount)
-    await pair.mint(wallet.address, overrides)
+    await pair.connect(wallet).mint(wallet.address, overrides)
   }
   const swapTestCases: BigNumber[][] = [
-    [1, 5, 10, '1662497915624478906'],
-    [1, 10, 5, '453305446940074565'],
+    [1, 5, 10],
+    [1, 10, 5],
 
-    [2, 5, 10, '2851015155847869602'],
-    [2, 10, 5, '831248957812239453'],
+    [2, 5, 10],
+    [2, 10, 5],
 
-    [1, 10, 10, '906610893880149131'],
-    [1, 100, 100, '987158034397061298'],
-    [1, 1000, 1000, '996006981039903216']
+    [1, 10, 10],
+    [1, 100, 100],
+    [1, 1000, 1000]
   ].map(a => a.map(n => (typeof n === 'string' ? bigNumberify(n) : expandTo18Decimals(n))))
   swapTestCases.forEach((swapTestCase, i) => {
     it(`getInputPrice:${i}`, async () => {
-      const [swapAmount, token0Amount, token1Amount, expectedOutputAmount] = swapTestCase
+      const [swapAmount, token0Amount, token1Amount] = swapTestCase
+    
       await addLiquidity(token0Amount, token1Amount)
       await token0.transfer(pair.address, swapAmount)
-      await expect(pair.swap(0, expectedOutputAmount.add(1), wallet.address, '0x', overrides)).to.be.revertedWith(
-        'BMFloki: K'
-      )
-      await pair.swap(0, expectedOutputAmount, wallet.address, '0x', overrides)
-    })
+      const amountInWithFee = swapAmount.mul(FEE_DENOMINATOR.sub(20));
+      const numerator = amountInWithFee.mul(token1Amount);
+      const denominator = token0Amount.mul(FEE_DENOMINATOR).add(amountInWithFee);
+      const amountOut = numerator.div(denominator);
+
+        await expect(pair.swap(0, amountOut.add(1), wallet.address, '0x', overrides)).to.be.revertedWith(
+          'BMFloki: K'
+        )
+  
+        await pair.swap(0, amountOut, wallet.address, '0x', overrides)
+    
+      })
   })
 
   const optimisticTestCases: BigNumber[][] = [
-    ['997000000000000000', 5, 10, 1], // given amountIn, amountOut = floor(amountIn * .997)
-    ['997000000000000000', 10, 5, 1],
-    ['997000000000000000', 5, 5, 1],
-    [1, 5, 5, '1003009027081243732'] // given amountOut, amountIn = ceiling(amountOut / .997)
+    ['998000000000000000', 5, 10, 1], // given amountIn, amountOut = floor(amountIn * .998)
+    ['998000000000000000', 10, 5, 1],
+    ['998000000000000000', 5, 5, 1],
+    [1, 5, 5, '1002004008016032065'] // given amountOut, amountIn = ceiling(amountOut / .998)
   ].map(a => a.map(n => (typeof n === 'string' ? bigNumberify(n) : expandTo18Decimals(n))))
   optimisticTestCases.forEach((optimisticTestCase, i) => {
     it(`optimistic:${i}`, async () => {
