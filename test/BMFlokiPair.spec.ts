@@ -9,6 +9,8 @@ import { AddressZero } from 'ethers/constants'
 
 const MINIMUM_LIQUIDITY = bigNumberify(10).pow(3)
 const FEE_DENOMINATOR = bigNumberify(10).pow(4)
+const ROUND_EXCEPTION = bigNumberify(10).pow(4)
+
 
 chai.use(solidity)
 
@@ -279,14 +281,20 @@ describe('BMFlokiPair', () => {
     await pair.swap(expectedOutputAmount, 0, wallet.address, '0x', overrides)
 
     const expectedLiquidity = expandTo18Decimals(1000)
-    await pair.transfer(pair.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))
-    await pair.burn(wallet.address, overrides)
-    expect(await pair.totalSupply()).to.eq(MINIMUM_LIQUIDITY.add('249750499251388'))
-    expect(await pair.balanceOf(other.address)).to.eq('249750499251388')
+    await pair.connect(wallet).transfer(pair.address, expectedLiquidity.sub(MINIMUM_LIQUIDITY))
+    await pair.connect(wallet).burn(wallet.address, overrides)
+    const expectedTotalSupply = bigNumberify('499501123250000')
+
+    expect((await pair.totalSupply()).div(ROUND_EXCEPTION))
+      .to.eq(MINIMUM_LIQUIDITY.add(expectedTotalSupply).div(ROUND_EXCEPTION))
+    expect((await pair.balanceOf(other.address)).div(ROUND_EXCEPTION))
+      .to.eq((expectedTotalSupply).div(ROUND_EXCEPTION))
 
     // using 1000 here instead of the symbolic MINIMUM_LIQUIDITY because the amounts only happen to be equal...
     // ...because the initial liquidity amounts were equal
-    expect(await token0.balanceOf(pair.address)).to.eq(bigNumberify(1000).add('249501683697445'))
-    expect(await token1.balanceOf(pair.address)).to.eq(bigNumberify(1000).add('250000187312969'))
+    expect((await token0.balanceOf(pair.address)).div(ROUND_EXCEPTION))
+      .to.eq(bigNumberify(1000).add('499003367398722').div(ROUND_EXCEPTION))
+    expect((await token1.balanceOf(pair.address)).div(ROUND_EXCEPTION))
+      .to.eq(bigNumberify(1000).add('500000374626485').div(ROUND_EXCEPTION))
   })
 })

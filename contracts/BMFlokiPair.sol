@@ -102,10 +102,11 @@ contract BMFlokiPair is IBMFlokiPair, BMFlokiERC20 {
         emit Sync(reserve0, reserve1);
     }
 
-    // if fee is on, mint liquidity equivalent to 1/6th of the growth in sqrt(k)
+    // if fee is on, mint liquidity equivalent to 1/ (protocolFeeDenominator + ~1) of the growth in sqrt(k)
     function _mintFee(uint112 _reserve0, uint112 _reserve1) private returns (bool feeOn) {
         address feeTo = IBMFlokiFactory(factory).feeTo();
         feeOn = feeTo != address(0);
+        uint8 protocolFeeDenominator = IBMFlokiFactory(factory).protocolFeeDenominator();
         uint256 _kLast = kLast; // gas savings
         if (feeOn) {
             if (_kLast != 0) {
@@ -113,7 +114,7 @@ contract BMFlokiPair is IBMFlokiPair, BMFlokiERC20 {
                 uint256 rootKLast = Math.sqrt(_kLast);
                 if (rootK > rootKLast) {
                     uint256 numerator = totalSupply.mul(rootK.sub(rootKLast));
-                    uint256 denominator = rootK.mul(5).add(rootKLast);
+                    uint256 denominator = rootK.mul(protocolFeeDenominator).add(rootKLast);
                     uint256 liquidity = numerator / denominator;
                     if (liquidity > 0) _mint(feeTo, liquidity);
                 }

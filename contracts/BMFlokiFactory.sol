@@ -6,6 +6,7 @@ import './BMFlokiPair.sol';
 contract BMFlokiFactory is IBMFlokiFactory {
     address public feeTo;
     address public feeToSetter;
+    uint8 public protocolFeeDenominator = 2; // uses ~10% of each swap fee
 
     mapping(address => mapping(address => address)) public getPair;
     address[] public allPairs;
@@ -47,5 +48,11 @@ contract BMFlokiFactory is IBMFlokiFactory {
     function setFeeToSetter(address _feeToSetter) external {
         require(msg.sender == feeToSetter, 'BMFloki: FORBIDDEN');
         feeToSetter = _feeToSetter;
+    }
+
+    function setProtocolFee(uint8 _protocolFeeDenominator) external {
+        require(msg.sender == feeToSetter, 'BMFlokiFactory: FORBIDDEN');
+        require(_protocolFeeDenominator > 0, 'BMFlokiFactory: FORBIDDEN_FEE');
+        protocolFeeDenominator = _protocolFeeDenominator;
     }
 }
