@@ -202,8 +202,8 @@ contract BMFlokiPair is IBMFlokiPair, BMFlokiERC20 {
         require(amount0In > 0 || amount1In > 0, 'BMFloki: INSUFFICIENT_INPUT_AMOUNT');
         {
             // scope for reserve{0,1}Adjusted, avoids stack too deep errors
-            uint256 balance0Adjusted = balance0.mul(1000).sub(amount0In.mul(2));
-            uint256 balance1Adjusted = balance1.mul(1000).sub(amount1In.mul(2));
+            uint256 balance0Adjusted = balance0.mul(1000).sub(amount0In.mul(IBMFlokiFactory(factory).swapFee()));
+            uint256 balance1Adjusted = balance1.mul(1000).sub(amount1In.mul(IBMFlokiFactory(factory).swapFee()));
             require(
                 balance0Adjusted.mul(balance1Adjusted) >= uint256(_reserve0).mul(_reserve1).mul(1000**2),
                 'BMFloki: K'

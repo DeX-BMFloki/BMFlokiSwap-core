@@ -7,6 +7,7 @@ contract BMFlokiFactory is IBMFlokiFactory {
     address public feeTo;
     address public feeToSetter;
     uint8 public protocolFeeDenominator = 2; // uses ~10% of each swap fee
+    uint32 public swapFee = 2; // uses 0.20% fee as default
 
     mapping(address => mapping(address => address)) public getPair;
     address[] public allPairs;
@@ -54,5 +55,11 @@ contract BMFlokiFactory is IBMFlokiFactory {
         require(msg.sender == feeToSetter, 'BMFlokiFactory: FORBIDDEN');
         require(_protocolFeeDenominator > 0, 'BMFlokiFactory: FORBIDDEN_FEE');
         protocolFeeDenominator = _protocolFeeDenominator;
+    }
+
+    function setSwapFee(uint32 _swapFee) external {
+        require(msg.sender == feeToSetter, 'BMFlokiFactory: FORBIDDEN');
+        require(_swapFee <= 1000, 'BMFlokiFactory: FORBIDDEN_FEE');
+        swapFee = _swapFee;
     }
 }

@@ -9,6 +9,8 @@ interface IBMFlokiFactory {
 
     function protocolFeeDenominator() external view returns (uint8);
 
+    function swapFee() external view returns (uint32);
+
     function feeToSetter() external view returns (address);
 
     function getPair(address tokenA, address tokenB) external view returns (address pair);
@@ -24,4 +26,6 @@ interface IBMFlokiFactory {
     function setFeeToSetter(address) external;
 
     function setProtocolFee(uint8 _protocolFee) external;
+
+    function setSwapFee(uint32) external;
 }
